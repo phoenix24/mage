@@ -33,17 +33,16 @@ func NewServer(port string, backend string) {
 }
 
 func main() {
-	var signals = make(chan os.Signal)
-	var backends = os.Args[1]
-
-	for index, backend := range strings.Split(backends, ",") {
-		var route = strings.Split(backend, ":")
-		var src, dst = ":" + route[0], "http://localhost:" + route[1]
+	var routes = os.Args[1]
+	for index, route := range strings.Split(routes, ",") {
+		var parts = strings.Split(route, ":")
+		var src, dst = ":" + parts[0], "http://localhost:" + parts[1]
 
 		log.Printf("%d, proxying: %s => %s\n", index, src, dst)
 		go NewServer(src, dst)
 	}
 
+	var signals = make(chan os.Signal)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 	for {
 		<-signals
