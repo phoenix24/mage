@@ -28,6 +28,7 @@ func handleQuote(writer http.ResponseWriter, request *http.Request) {
 	}
 	writer.Header().Set("Content-Type", "application/json")
 	writer.Write(response)
+	log.Println("request served!")
 }
 
 func main() {

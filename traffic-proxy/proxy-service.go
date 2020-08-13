@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
-	"time"
 )
 
 func handler(backend string) http.Handler {
@@ -20,29 +20,34 @@ func handler(backend string) http.Handler {
 		request.URL.Scheme = pUrl.Scheme
 		request.Header.Set("X-Forwarded-Host", pUrl.Host)
 		revproxy.ServeHTTP(writer, request)
+		log.Println("forwarding the incoming request :", request)
 	})
 }
 
-func main() {
-	var backend = os.Args[1]
-	var signals = make(chan os.Signal)
-
-	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-signals
-		log.Println("\r- Ctrl+C pressed in Terminal")
-		os.Exit(0)
-	}()
-
+func NewServer(port string, backend string) {
 	var mux = http.NewServeMux()
 	mux.Handle("/", handler(backend))
 
-	var server = &http.Server{
-		ReadTimeout:  20 * time.Second,
-		WriteTimeout: 20 * time.Second,
-		IdleTimeout:  120 * time.Second,
-		Addr:         ":7070",
-		Handler:      mux,
+	var server = &http.Server{Addr: port, Handler: mux}
+	log.Fatalln(server.ListenAndServe())
+}
+
+func main() {
+	var signals = make(chan os.Signal)
+	var backends = os.Args[1]
+
+	for index, backend := range strings.Split(backends, ",") {
+		var route = strings.Split(backend, ":")
+		var src, dst = ":" + route[0], "http://localhost:" + route[1]
+
+		log.Printf("%d, proxying: %s => %s\n", index, src, dst)
+		go NewServer(src, dst)
 	}
-	log.Fatal(server.ListenAndServe())
+
+	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+	for {
+		<-signals
+		log.Println("\r- Ctrl+C pressed in Terminal")
+		os.Exit(0)
+	}
 }

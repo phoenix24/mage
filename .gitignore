@@ -1,6 +1,7 @@
 # go binaries
 backend
 frontend
+svc-*
 
 # emacs, vim temp
 *~
