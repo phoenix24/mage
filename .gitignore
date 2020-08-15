@@ -1,7 +1,5 @@
 # go binaries
-backend
-frontend
-svc-*
+*.bin
 
 # emacs, vim temp
 *~
@@ -193,6 +191,7 @@ cython_debug/
 # vendor/
 
 .gitignore
+*.iml
 .idea
 .idea/.gitignore
 .idea/misc.xml

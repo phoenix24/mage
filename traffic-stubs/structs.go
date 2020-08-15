@@ -1,4 +1,4 @@
-package main
+package traffic_stubs
 
 type Info struct {
 	Name string

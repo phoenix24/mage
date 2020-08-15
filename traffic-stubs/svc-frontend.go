@@ -1,4 +1,4 @@
-package main
+package traffic_stubs
 
 import (
 	"encoding/json"
