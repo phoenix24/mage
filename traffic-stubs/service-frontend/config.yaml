@@ -1,0 +1,6 @@
+port: 4000
+name: frontend service 1
+backends:
+  - localhost:3000
+  - localhost:3001
+  - localhost:3002

@@ -1,28 +1,38 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"github.com/spf13/viper"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"thetestr/traffic-stubs/service-commons"
 )
 
-func main () {
-	var port = ":" + os.Args[1]
-	var backends = strings.Split(os.Args[2], ",")
-	log.Println("listening on port", port)
-	log.Println("listening on backends", backends)
-
-	http.Handle("/infos", handleInfos(backends))
-	http.Handle("/quotes", handleQuotes(backends))
-
-	log.Println("frontend listening on", port)
-	log.Fatalln(http.ListenAndServe(port, nil))
+type SvcConf struct {
+	Port int
+	Name string
+	Backends []string
 }
 
+func (c SvcConf) HostPort() string {
+	return fmt.Sprintf(":%d", c.Port)
+}
+
+func readConf(path string) SvcConf {
+	viper.SetConfigType("yaml")
+
+	var config SvcConf
+	var content, _ = ioutil.ReadFile(path)
+	var _ = viper.ReadConfig(bytes.NewBuffer(content))
+	if  err := viper.Unmarshal(&config); err != nil {
+		fmt.Println("failed to read service config")
+	}
+	return config
+}
 
 func fetch(index int, backend string, v interface{}) ([]byte, error) {
 	log.Printf("fetching from %d, %s\n", index, backend)
@@ -64,3 +74,13 @@ func handleQuotes(backends []string) http.Handler {
 	})
 }
 
+func main () {
+	var config = readConf(os.Args[1])
+	var port, backends = config.Port, config.Backends
+	log.Println("listening on port", port)
+	log.Println("listening on backends", backends)
+
+	http.Handle("/infos", handleInfos(backends))
+	http.Handle("/quotes", handleQuotes(backends))
+	log.Fatalln(http.ListenAndServe(config.HostPort(), nil))
+}

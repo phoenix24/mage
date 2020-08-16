@@ -26,5 +26,7 @@ build:
 	@$(MAKE) -C traffic-stubs build
 	@$(MAKE) -C traffic-storage build
 
+package:
+
 compile:
 	@$(MAKE) build

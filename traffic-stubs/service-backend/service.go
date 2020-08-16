@@ -12,6 +12,15 @@ import (
 	"thetestr/traffic-stubs/service-commons"
 )
 
+type SvcConf struct {
+	Port int
+	Name string
+}
+
+func (c SvcConf) HostPort() string {
+	return fmt.Sprintf(":%d", c.Port)
+}
+
 func readConf(path string) SvcConf {
 	viper.SetConfigType("yaml")
 

@@ -7,4 +7,7 @@ clean:
 
 build:
 	mkdir -p ${BUILD_DIR}
-	go build -o ${BUILD_DIR}/service-backend service.go config.go
+	cp config.yaml ${BUILD_DIR}/service-backend.yaml
+	go build -o ${BUILD_DIR}/service-backend service.go
+
+package:
