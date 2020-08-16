@@ -1,6 +1,7 @@
 MAKE_DIR = $(PWD)
 
 test:
+	go test
 
 clean:
 

@@ -1,6 +1,8 @@
 MAKE_DIR = $(PWD)
 
 test:
+	@$(MAKE) -C service-backend test
+	@$(MAKE) -C service-frontend test
 
 clean:
 
