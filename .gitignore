@@ -197,9 +197,3 @@ cython_debug/
 .idea/.gitignore
 .idea/misc.xml
 .idea/sbt.xml
-testr-envs/
-testr-mockers/
-testr-runners/
-traffic-analyzers/
-traffic-sniffer/
-traffic-storage/
