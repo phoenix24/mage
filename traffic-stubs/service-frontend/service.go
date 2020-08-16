@@ -1,4 +1,4 @@
-package traffic_stubs
+package main
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"thetestr/traffic-stubs/service-commons"
 )
 
 func main () {
@@ -35,14 +36,14 @@ func fetch(index int, backend string, v interface{}) ([]byte, error) {
 
 func handleInfos(backends []string) http.Handler {
 	return http.HandlerFunc(func(wr http.ResponseWriter, rq *http.Request) {
-		var infos []Info
+		var infos []commons.Info
 		for index, backend := range backends {
-			var info Info
+			var info commons.Info
 			var _, _ = fetch(index, "http://"+backend+"/info", &info)
 			infos = append(infos, info)
 		}
 
-		var response, _ = json.Marshal(Infos{len(infos), infos})
+		var response, _ = json.Marshal(commons.Infos{len(infos), infos})
 		wr.Header().Set("Content-Type", "application/json")
 		wr.Write(response)
 	})
@@ -50,14 +51,14 @@ func handleInfos(backends []string) http.Handler {
 
 func handleQuotes(backends []string) http.Handler {
 	return http.HandlerFunc(func(wr http.ResponseWriter, rq *http.Request) {
-		var quotes []Quote
+		var quotes []commons.Quote
 		for index, backend := range backends {
-			var quote Quote
+			var quote commons.Quote
 			var _, _ = fetch(index, "http://"+backend+"/quote", &quote)
 			quotes = append(quotes, quote)
 		}
 
-		var response, _ = json.Marshal(Quotes{len(quotes), quotes})
+		var response, _ = json.Marshal(commons.Quotes{len(quotes), quotes})
 		wr.Header().Set("Content-Type", "application/json")
 		wr.Write(response)
 	})
