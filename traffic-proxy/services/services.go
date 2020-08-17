@@ -1,0 +1,25 @@
+package services
+
+type Service int
+
+const (
+	TCP       Service = iota + 1
+	UDP
+	DNS
+	NTP
+	HTTP
+	HTTPS
+	WEBSOCKET
+	THRIFT
+	PROTOBUF
+	MYSQL
+	PGSQL
+	MONGODB
+	CASSANDRA
+	REDIS
+	MEMCACHE
+	AEROSPIKE
+	KAFKA
+	PULSAR
+	ZOOKEEPER
+)

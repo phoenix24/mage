@@ -19,12 +19,28 @@ clean:
 	@$(MAKE) -C traffic-stubs clean
 	@$(MAKE) -C traffic-storage clean
 
-build:
+build-testr-envs:
 	@$(MAKE) -C testr-envs build
+
+build-testr-runners:
 	@$(MAKE) -C testr-runners build
+
+build-traffic-proxy:
 	@$(MAKE) -C traffic-proxy build
+
+build-traffic-stubs:
 	@$(MAKE) -C traffic-stubs build
+
+build-traffic-storage:
 	@$(MAKE) -C traffic-storage build
+
+build:
+	@echo "build everything!"
+	@$(MAKE) build-testr-envs
+	@$(MAKE) build-testr-runners
+	@$(MAKE) build-traffic-proxy
+	@$(MAKE) build-traffic-stubs
+	@$(MAKE) build-traffic-storage
 
 package:
 
