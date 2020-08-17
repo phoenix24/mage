@@ -1,23 +1,28 @@
 port: 9000
 name: traffic-proxy dev-mode
-backends:
+servers:
   - name: backend service1
     mode: proxy
-    route-src: "http://0.0.0.0:13000"
-    route-dst: "http://0.0.0.0:3000"
+    source: "http://0.0.0.0:13000"
+    backend: "http://0.0.0.0:3000"
+    storage: "inmemory:///dev-test/service1"
   - name: backend service2
     mode: proxy
-    route-src: "http://0.0.0.0:13001"
-    route-dst: "http://0.0.0.0:3001"
+    source: "http://0.0.0.0:13001"
+    backend: "http://0.0.0.0:3001"
+    storage: "inmemory:///dev-test/service2"
   - name: mysql service
     mode: proxy
-    route-src: "mysql://0.0.0.0:13306"
-    route-dst: "mysql://0.0.0.0:3306"
+    source: "mysql://0.0.0.0:13306"
+    backend: "mysql://0.0.0.0:3306"
+    storage: "inmemory:///dev-test/mysql"
   - name: redis service
     mode: proxy
-    route-src: "redis://0.0.0.0:15379"
-    route-dst: "redis://0.0.0.0:5379"
-datastore:
-  url: "inmemory://"
-  username: "na"
-  password: "na"
+    source: "redis://0.0.0.0:15379"
+    backend: "redis://0.0.0.0:5379"
+    storage: "inmemory:///dev-test/redis"
+health:
+  path: "/health"
+directory:
+  path: "/directory"
+

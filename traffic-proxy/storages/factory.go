@@ -1,7 +1,14 @@
 package storages
 
-import "traffic-proxy/configs"
+import (
+	"log"
+	"traffic-proxy/configs"
+)
 
-func DataStore(config configs.StorageConfig) *configs.StorageConfig {
+type Storage interface {
+}
+
+func NewStorage(config configs.StorageURL) *Storage {
+	log.Printf("starting storage: %s\n", config.URL)
 	return nil
 }

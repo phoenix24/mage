@@ -6,16 +6,16 @@ import (
 	"os/signal"
 	"syscall"
 	"traffic-proxy/configs"
-	"traffic-proxy/services"
-	"traffic-proxy/storages"
+	"traffic-proxy/servers"
 )
 
 func main() {
-	var config = configs.ReadConfig(os.Args[1])
-	var storage = storages.DataStore(config.Storage)
-	for _, backend := range config.Services {
-		var service = services.NewService(backend, storage)
-		go service.ListenAndServe()
+	var pconfig = configs.ReadConfig(os.Args[1])
+	for _, config := range pconfig.Servers {
+		var server, _ = servers.NewServer(config)
+		go func(config configs.ServerConfig) {
+			var _ = server.ListenAndServe(config)
+		}(config)
 	}
 
 	var signals = make(chan os.Signal)

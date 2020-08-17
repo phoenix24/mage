@@ -4,22 +4,22 @@ import (
 	"strings"
 )
 
-type Route string
+type Address string
 
-func (r Route) parts() []string {
-	var route = string(r)
-	var cleaned = strings.ReplaceAll(route, "//", "")
+func (r Address) parts() []string {
+	var address = string(r)
+	var cleaned = strings.ReplaceAll(address, "//", "")
 	return strings.Split(cleaned, ":")
 }
 
-func (r Route) Host() string {
-	return r.parts()[1]
-}
-
-func (r Route) Port() string {
+func (r Address) Port() string {
 	return r.parts()[2]
 }
 
-func (r Route) Service() string {
+func (r Address) Host() string {
+	return r.parts()[1]
+}
+
+func (r Address) Scheme() string {
 	return r.parts()[0]
 }

@@ -21,9 +21,9 @@ func handler(backend string) http.Handler {
 	})
 }
 
-func newService(backend configs.ServiceConfig) {
+func newService(backend configs.ServerConfig) {
 	var mux = http.NewServeMux()
-	mux.Handle("/", handler(backend.Dst))
+	mux.Handle("/", handler(backend.Backend))
 
 	var server = &http.Server{Addr: port, Handler: mux}
 	log.Fatalln(server.ListenAndServe())
