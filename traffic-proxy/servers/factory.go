@@ -3,9 +3,16 @@ package servers
 import "traffic-proxy/configs"
 
 type Server interface {
-	ListenAndServe(config configs.ServerConfig) error
+	ListenAndServe() error
 }
 
 func NewServer(config configs.ServerConfig) (Server, error) {
-	return &ProxyServer{}, nil
+	var server = &ProxyServer{
+		name:    config.Name,
+		mode:    config.Mode,
+		source:  config.Source,
+		backend: config.Backend,
+		storage: config.Storage,
+	}
+	return server, nil
 }

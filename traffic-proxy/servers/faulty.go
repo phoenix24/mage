@@ -1,12 +1,8 @@
 package servers
 
-import (
-	"traffic-proxy/configs"
-)
-
 type FaultyServer struct {
 }
 
-func (f *FaultyServer) ListenAndServe(config configs.ServerConfig) error {
+func (f *FaultyServer) ListenAndServe() error {
 	panic("implement me")
 }

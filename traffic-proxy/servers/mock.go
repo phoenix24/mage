@@ -1,12 +1,8 @@
 package servers
 
-import (
-	"traffic-proxy/configs"
-)
-
 type MockServer struct {
 }
 
-func (m *MockServer) ListenAndServe(config configs.ServerConfig) error {
+func (m *MockServer) ListenAndServe() error {
 	panic("implement me")
 }

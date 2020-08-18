@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -18,6 +19,10 @@ func (r Address) Port() string {
 
 func (r Address) Host() string {
 	return r.parts()[1]
+}
+
+func (r Address) HostPort() string {
+	return fmt.Sprintf("%s:%s", r.parts()[1], r.parts()[2])
 }
 
 func (r Address) Scheme() string {

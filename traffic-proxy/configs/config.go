@@ -24,7 +24,7 @@ type ProxyConfig struct {
 }
 
 //func (b ServerConfig) Scheme() services.Scheme {
-//	var dst, src = b.Backend.Scheme(), b.Source.Scheme()
+//	var dst, src = b.backend.Scheme(), b.Source.Scheme()
 //	if dst != src {
 //		log.Fatalln("source and destination must be same service type.")
 //	}

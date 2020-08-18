@@ -14,7 +14,7 @@ func main() {
 	for _, config := range pconfig.Servers {
 		var server, _ = servers.NewServer(config)
 		go func(config configs.ServerConfig) {
-			var _ = server.ListenAndServe(config)
+			var _ = server.ListenAndServe()
 		}(config)
 	}
 
