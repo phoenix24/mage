@@ -21,30 +21,31 @@ type ProxyServer struct {
 	storage configs.StorageURL
 }
 
-func broker(dst, src net.Conn, srcClosed chan struct{}) {
+func broker(dst, src net.Conn, srcChan chan<- struct{}, meta string) {
 	_, err := io.Copy(dst, src)
 	if err != nil {
-		log.Printf("Copy error: %s", err)
+		log.Printf("%s, copy error: %s", meta, err)
 	}
 	if err := src.Close(); err != nil {
-		log.Printf("Close error: %s", err)
+		log.Printf("%s, close error: %s", meta, err)
 	}
-	srcClosed <- struct{}{}
+	srcChan <-struct{}{}
 }
 
-func (s *ProxyServer) handler(clientConn, serverConn net.Conn) {
+func (s *ProxyServer) handler(clientConn, serverConn *net.TCPConn) {
 	var serverClosed = make(chan struct{}, 1)
 	var clientClosed = make(chan struct{}, 1)
 
-	go broker(serverConn, clientConn, clientClosed)
-	go broker(clientConn, serverConn, serverClosed)
+	go broker(serverConn, clientConn, clientClosed, "client")
+	go broker(clientConn, serverConn, serverClosed, "server")
 
 	var waitFor chan struct{}
 	select {
-	case <- clientClosed:
+	case <-clientClosed:
+		serverConn.SetLinger(0)
 		serverConn.Close()
 		waitFor = serverClosed
-	case <- serverClosed:
+	case <-serverClosed:
 		clientConn.Close()
 		waitFor = clientClosed
 	}
@@ -86,10 +87,11 @@ func (s *ProxyServer) ListenAndServe() error {
 		var serverConn, err = net.Dial("tcp", s.backend.HostPort())
 		if err != nil {
 			log.Println("failed to connect to backend server: ", err)
+			clientConn.Close()
+		} else {
+			log.Printf("serving %s -> %s\n", clientConn.RemoteAddr().String(), serverConn.RemoteAddr().String())
+			go s.handler(clientConn.(*net.TCPConn), serverConn.(*net.TCPConn))
 		}
-
-		log.Printf("serving %s -> %s\n", clientConn.RemoteAddr().String(), serverConn.RemoteAddr().String())
-		go s.handler(clientConn, serverConn)
 	}
 	return nil
 }
