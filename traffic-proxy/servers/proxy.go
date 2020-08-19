@@ -2,6 +2,7 @@ package servers
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"traffic-proxy/configs"
@@ -20,51 +21,64 @@ type ProxyServer struct {
 	storage configs.StorageURL
 }
 
-
-func connProxy(in <-chan *net.TCPConn, out chan<- *net.TCPConn) {
-	for conn := range in {
-		connHandler()
+func broker(dst, src net.Conn, srcClosed chan struct{}) {
+	_, err := io.Copy(dst, src)
+	if err != nil {
+		log.Printf("Copy error: %s", err)
 	}
-}
-
-func connHandler(connPair *ConnPair) {
-	var pConn, bConn = connPair.pConn, connPair.bConn
-	defer pConn.Close()
-	defer bConn.Close()
-
-	log.Printf("serving %s -> %s\n", pConn.RemoteAddr().String(), bConn.RemoteAddr().String())
-	for {
-		var pbuf = make([]byte, 4096)
-		var pread, _ = pConn.Read(pbuf)
-		fmt.Println("1. read/ wrote: ", pread, len(pbuf))
-
-		var pwritten, _ = bConn.Write(pbuf[:pread])
-		fmt.Println("1. write complete: ", pwritten)
-
-		var bbuf = make([]byte, 4096)
-		var bread, _ = bConn.Read(bbuf)
-		fmt.Println("2. read/ wrote: ", bread, len(bbuf))
-
-		var bwritten, _ = pConn.Write(bbuf[:bread])
-		fmt.Println("2. write complete: ", bwritten)
+	if err := src.Close(); err != nil {
+		log.Printf("Close error: %s", err)
 	}
+	srcClosed <- struct{}{}
 }
 
-func connCleaner(connPair *ConnPair) {
+func (s *ProxyServer) handler(client net.Conn) {
+	defer client.Close()
 
+	var server, err = net.Dial("tcp", s.backend.HostPort())
+	if err != nil {
+		log.Println("failed to connect to backend server: ", err)
+	}
+	defer server.Close()
+	log.Printf("serving %s -> %s\n", client.RemoteAddr().String(), server.RemoteAddr().String())
+
+	go io.Copy(server, client)
+	io.Copy(client, server)
+
+	//for {
+	//	var pbuf = make([]byte, 4096)
+	//	var pread, _ = client.Read(pbuf)
+	//	fmt.Println("1. read/ wrote: ", pread, len(pbuf))
+	//
+	//	if pread == 0 {
+	//		break
+	//	}
+	//	var pwritten, _ = server.Write(pbuf[:pread])
+	//	fmt.Println("1. write complete: ", pwritten)
+	//
+	//	var bbuf = make([]byte, 4096)
+	//	var bread, _ = server.Read(bbuf)
+	//	fmt.Println("2. read/ wrote: ", bread, len(bbuf))
+	//
+	//	var bwritten, _ = client.Write(bbuf[:bread])
+	//	fmt.Println("2. write complete: ", bwritten)
+	//}
 }
-
 
 func (s *ProxyServer) ListenAndServe() error {
-	var message = fmt.Sprintf("\nstarting server : %s\n", s.name) +
+	var message =
+		fmt.Sprintf("\nstarting server : %s\n", s.name) +
 		fmt.Sprintf("    with mode   : %s\n", s.mode) +
 		fmt.Sprintf("    with route  : %s -> %s\n", s.source, s.backend) +
-		fmt.Sprintf("    with stores : %s\n", s.storage)
+		fmt.Sprintf("    with stores : %s", s.storage)
 	log.Println(message)
+
+	//todo:
+	// make file to support cross-os builds.
 
 	//todo: mode -> tcp-proxy (source <-> backend)
 	// connection manager.
-	// connection manager.
+	// sinks - null,file,console,kafka,pulsar,etc.
 
 	//todo: mode -> tcp-proxy + record traffic (in-memory).
 	//todo: storage -> in-memory
@@ -74,24 +88,15 @@ func (s *ProxyServer) ListenAndServe() error {
 	//todo: request matcher (bytestream)?
 	//todo: request matcher (parsed request)?
 
-	var port = ":" + s.source.Port()
-	var listen, err = net.Listen("tcp", port)
+	var listen, err = net.Listen("tcp", s.source.HostPort())
 	if err != nil {
-		log.Fatalln("error listening on the port: ", port)
+		log.Fatalln("error listening on the port: ", s.source.HostPort())
 	}
 	defer listen.Close()
 
-	var pendingConns = make(chan *net.TCPConn)
-	var completeConns = make(chan *net.TCPConn)
-
-	go connProxy(pendingConns, completeConns)
-	go connCleaner(completeConns)
-
 	for {
-		var proxyConn, _ = listen.Accept()
-		var backendTCP, _ = net.ResolveTCPAddr("tcp", s.backend.HostPort())
-		var backendConn, _ = net.DialTCP("tcp", nil, backendTCP)
-		go connHandler(&ConnPair{pConn: proxyConn, bConn: backendConn})
+		var conn, _ = listen.Accept()
+		go s.handler(conn)
 	}
 	return nil
 }
