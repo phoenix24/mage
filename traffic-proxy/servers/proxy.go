@@ -32,37 +32,24 @@ func broker(dst, src net.Conn, srcClosed chan struct{}) {
 	srcClosed <- struct{}{}
 }
 
-func (s *ProxyServer) handler(client net.Conn) {
-	defer client.Close()
+func (s *ProxyServer) handler(clientConn, serverConn net.Conn) {
+	var serverClosed = make(chan struct{}, 1)
+	var clientClosed = make(chan struct{}, 1)
 
-	var server, err = net.Dial("tcp", s.backend.HostPort())
-	if err != nil {
-		log.Println("failed to connect to backend server: ", err)
+	go broker(serverConn, clientConn, clientClosed)
+	go broker(clientConn, serverConn, serverClosed)
+
+	var waitFor chan struct{}
+	select {
+	case <- clientClosed:
+		serverConn.Close()
+		waitFor = serverClosed
+	case <- serverClosed:
+		clientConn.Close()
+		waitFor = clientClosed
 	}
-	defer server.Close()
-	log.Printf("serving %s -> %s\n", client.RemoteAddr().String(), server.RemoteAddr().String())
 
-	go io.Copy(server, client)
-	io.Copy(client, server)
-
-	//for {
-	//	var pbuf = make([]byte, 4096)
-	//	var pread, _ = client.Read(pbuf)
-	//	fmt.Println("1. read/ wrote: ", pread, len(pbuf))
-	//
-	//	if pread == 0 {
-	//		break
-	//	}
-	//	var pwritten, _ = server.Write(pbuf[:pread])
-	//	fmt.Println("1. write complete: ", pwritten)
-	//
-	//	var bbuf = make([]byte, 4096)
-	//	var bread, _ = server.Read(bbuf)
-	//	fmt.Println("2. read/ wrote: ", bread, len(bbuf))
-	//
-	//	var bwritten, _ = client.Write(bbuf[:bread])
-	//	fmt.Println("2. write complete: ", bwritten)
-	//}
+	<-waitFor
 }
 
 func (s *ProxyServer) ListenAndServe() error {
@@ -95,8 +82,14 @@ func (s *ProxyServer) ListenAndServe() error {
 	defer listen.Close()
 
 	for {
-		var conn, _ = listen.Accept()
-		go s.handler(conn)
+		var clientConn, _ = listen.Accept()
+		var serverConn, err = net.Dial("tcp", s.backend.HostPort())
+		if err != nil {
+			log.Println("failed to connect to backend server: ", err)
+		}
+
+		log.Printf("serving %s -> %s\n", clientConn.RemoteAddr().String(), serverConn.RemoteAddr().String())
+		go s.handler(clientConn, serverConn)
 	}
 	return nil
 }
