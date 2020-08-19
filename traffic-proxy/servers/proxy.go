@@ -16,13 +16,14 @@ type ConnPair struct {
 type ProxyServer struct {
 	name    string
 	mode    configs.Mode
+	sinks 	[]io.Writer
 	source  configs.Address
 	backend configs.Address
-	storage configs.StorageURL
 }
 
-func broker(dst, src net.Conn, srcChan chan<- struct{}, meta string) {
-	_, err := io.Copy(dst, src)
+func (s *ProxyServer) broker(dst, src net.Conn, srcChan chan<- struct{}, meta string) {
+	var sinks = append(s.sinks, dst)
+	_, err := io.Copy(io.MultiWriter(sinks...), src)
 	if err != nil {
 		log.Printf("%s, copy error: %s", meta, err)
 	}
@@ -36,8 +37,8 @@ func (s *ProxyServer) handler(clientConn, serverConn *net.TCPConn) {
 	var serverClosed = make(chan struct{}, 1)
 	var clientClosed = make(chan struct{}, 1)
 
-	go broker(serverConn, clientConn, clientClosed, "client")
-	go broker(clientConn, serverConn, serverClosed, "server")
+	go s.broker(serverConn, clientConn, clientClosed, "client")
+	go s.broker(clientConn, serverConn, serverClosed, "server")
 
 	var waitFor chan struct{}
 	select {
@@ -58,23 +59,20 @@ func (s *ProxyServer) ListenAndServe() error {
 		fmt.Sprintf("\nstarting server : %s\n", s.name) +
 		fmt.Sprintf("    with mode   : %s\n", s.mode) +
 		fmt.Sprintf("    with route  : %s -> %s\n", s.source, s.backend) +
-		fmt.Sprintf("    with stores : %s", s.storage)
+		fmt.Sprintf("    with sinks  : %s", s.sinks)
 	log.Println(message)
 
-	//todo:
-	// make file to support cross-os builds.
+	//todo: make file to support cross-os builds.
 
-	//todo: mode -> tcp-proxy (source <-> backend)
-	// connection manager.
-	// sinks - null,file,console,kafka,pulsar,etc.
+	//todo: mode -> proxy (source <> backend)
+	// sinks - null, console etc.
 
-	//todo: mode -> tcp-proxy + record traffic (in-memory).
-	//todo: storage -> in-memory
-	//todo: storage -> pubsub queue
+	//todo: mode -> record traffic
+	// sinks - file, redis, inmemory, kafka, pulsar, database etc.
 
-	//todo: mode -> tcp-proxy - replay traffic only.
-	//todo: request matcher (bytestream)?
-	//todo: request matcher (parsed request)?
+	//todo: mode -> replay traffic
+	// request matcher (bytestream)?
+	// request matcher (parsed request)?
 
 	var listen, err = net.Listen("tcp", s.source.HostPort())
 	if err != nil {

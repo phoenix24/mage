@@ -1,7 +1,7 @@
 package configs
 
 type Mode string
-type StorageURL string
+type Sink string
 
 const (
 	PROXY  Mode = "PROXY"
@@ -10,11 +10,11 @@ const (
 )
 
 type ServerConfig struct {
-	Name    string     `mapstructure:"name"`
-	Mode    Mode       `mapstructure:"mode"`
-	Source  Address    `mapstructure:"source"`
-	Backend Address    `mapstructure:"backend"`
-	Storage StorageURL `mapstructure:"storage"`
+	Name    string  `mapstructure:"name"`
+	Mode    Mode    `mapstructure:"mode"`
+	Sinks   []Sink  `mapstructure:"sinks"`
+	Source  Address `mapstructure:"source"`
+	Backend Address `mapstructure:"backend"`
 }
 
 type ProxyConfig struct {
