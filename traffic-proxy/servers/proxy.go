@@ -5,18 +5,50 @@ import (
 	"io"
 	"log"
 	"net"
+	"time"
 	"traffic-proxy/configs"
 )
 
+type SrcID string
+
+const (
+	SrcClient = "client"
+	SrcServer = "server"
+)
+
+type MessageProtocol uint8
+
+const (
+	HTTP = 0
+	MYSQL
+	PGSQL
+	REDIS
+)
+
+type Message struct {
+	data  []byte
+	time  time.Time
+	srcIp net.IP
+	srcId SrcID
+}
+
+type MessagePair struct {
+	ID       string //todo: must be a uuid (type)?
+	Request  Message
+	Response Message
+	Protocol MessageProtocol
+}
+
 type ConnPair struct {
-	pConn net.Conn
-	bConn *net.TCPConn
+	pConn    net.Conn
+	bConn    net.Conn
+	messages []Message
 }
 
 type ProxyServer struct {
 	name    string
 	mode    configs.Mode
-	sinks 	[]io.Writer
+	sinks   []io.Writer
 	source  configs.Address
 	backend configs.Address
 }
@@ -30,7 +62,7 @@ func (s *ProxyServer) broker(dst, src net.Conn, srcChan chan<- struct{}, meta st
 	if err := src.Close(); err != nil {
 		log.Printf("%s, close error: %s", meta, err)
 	}
-	srcChan <-struct{}{}
+	srcChan <- struct{}{}
 }
 
 func (s *ProxyServer) handler(clientConn, serverConn *net.TCPConn) {
@@ -55,8 +87,7 @@ func (s *ProxyServer) handler(clientConn, serverConn *net.TCPConn) {
 }
 
 func (s *ProxyServer) ListenAndServe() error {
-	var message =
-		fmt.Sprintf("\nstarting server : %s\n", s.name) +
+	var message = fmt.Sprintf("\nstarting server : %s\n", s.name) +
 		fmt.Sprintf("    with mode   : %s\n", s.mode) +
 		fmt.Sprintf("    with route  : %s -> %s\n", s.source, s.backend) +
 		fmt.Sprintf("    with sinks  : %s", s.sinks)

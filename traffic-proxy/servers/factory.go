@@ -11,20 +11,16 @@ type Server interface {
 }
 
 func NewServer(config configs.ServerConfig) (Server, error) {
-	var writers []io.Writer
-	for _, sink := range config.Sinks {
-		if sink == "null" {
-			writers = append(writers, &sinks.NullSink{})
-		}
-		if sink == "console" {
-			writers = append(writers, &sinks.ConsoleSink{})
-		}
+	var tfsinks []io.Writer
+	for _, sconfig := range config.Sinks {
+		var tfsink, _ = sinks.NewSink(sconfig)
+		tfsinks = append(tfsinks, tfsink)
 	}
 
 	var server = &ProxyServer{
 		name:    config.Name,
 		mode:    config.Mode,
-		sinks:   writers,
+		sinks:   tfsinks,
 		source:  config.Source,
 		backend: config.Backend,
 	}
