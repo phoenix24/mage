@@ -5,54 +5,33 @@ servers:
     mode: proxy
     source: "http://0.0.0.0:13000"
     backend: "http://0.0.0.0:3000"
-    sinks:
-      - "null"
-      - "console"
-      - "file:///tmp/service1"
-      - "inmem:///service1"
-      - "redis:///service1"
   - name: backend service1
     mode: proxy
     source: "http://0.0.0.0:13001"
     backend: "http://0.0.0.0:3001"
-    sinks:
-      - "null"
-      - "console"
   - name: backend service2
     mode: proxy
     source: "http://0.0.0.0:13002"
     backend: "http://0.0.0.0:3002"
-    sinks:
-      - "null"
-      - "console"
   - name: frontend service
     mode: proxy
     source: "http://0.0.0.0:14000"
     backend: "http://0.0.0.0:4000"
-    sinks:
-      - "null"
-      - "console"
   - name: mysql service
     mode: proxy
     source: "mysql://0.0.0.0:13306"
     backend: "mysql://0.0.0.0:3306"
-    sinks:
-      - "null"
-      - "console"
   - name: pgsql service
     mode: proxy
     source: "pgsql://0.0.0.0:15432"
     backend: "pgsql://0.0.0.0:5432"
-    sinks:
-      - "null"
-      - "console"
   - name: redis service
     mode: proxy
     source: "redis://0.0.0.0:16379"
     backend: "redis://0.0.0.0:6379"
-    sinks:
-      - "null"
-      - "console"
+sinks:
+  - "null"
+  - "console"
 health:
   path: "/health"
 directory:

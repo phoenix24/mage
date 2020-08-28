@@ -1,28 +1,21 @@
 package servers
 
 import (
-	"io"
+	"traffic-proxy/common"
 	"traffic-proxy/configs"
-	"traffic-proxy/sinks"
 )
 
-type Server interface {
+type Proxy interface {
 	ListenAndServe() error
 }
 
-func NewServer(config configs.ServerConfig) (Server, error) {
-	var tfsinks []io.Writer
-	for _, sconfig := range config.Sinks {
-		var tfsink, _ = sinks.NewSink(sconfig)
-		tfsinks = append(tfsinks, tfsink)
-	}
-
-	var server = &ProxyServer{
+func NewProxy(config configs.ServerConfig, channel chan *common.Packet) (Proxy, error) {
+	var proxy = &ProxyServer{
+		sink:    channel,
 		name:    config.Name,
 		mode:    config.Mode,
-		sinks:   tfsinks,
 		source:  config.Source,
 		backend: config.Backend,
 	}
-	return server, nil
+	return proxy, nil
 }

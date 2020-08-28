@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"time"
+	"traffic-proxy/common"
 	"traffic-proxy/configs"
 )
 
@@ -16,46 +17,27 @@ const (
 	SrcServer = "server"
 )
 
-type MessageProtocol uint8
-
-const (
-	HTTP = 0
-	MYSQL
-	PGSQL
-	REDIS
-)
-
-type Message struct {
-	data  []byte
-	time  time.Time
-	srcIp net.IP
-	srcId SrcID
-}
-
-type MessagePair struct {
-	ID       string //todo: must be a uuid (type)?
-	Request  Message
-	Response Message
-	Protocol MessageProtocol
-}
-
-type ConnPair struct {
-	pConn    net.Conn
-	bConn    net.Conn
-	messages []Message
+type ConnHandler struct {
+	client   *net.TCPConn
+	remote   *net.TCPConn
+	sink     chan *common.Packet
 }
 
 type ProxyServer struct {
 	name    string
+	sink    chan *common.Packet
 	mode    configs.Mode
-	sinks   []io.Writer
 	source  configs.Address
 	backend configs.Address
 }
 
-func (s *ProxyServer) broker(dst, src net.Conn, srcChan chan<- struct{}, meta string) {
-	var sinks = append(s.sinks, dst)
-	_, err := io.Copy(io.MultiWriter(sinks...), src)
+func (c *ConnHandler) Write(payload []byte) (n int, err error) {
+	c.sink <- &common.Packet{Data: payload, Time: time.Now()}
+	return len(payload), nil
+}
+
+func (c *ConnHandler) broker(dst, src net.Conn, srcChan chan<- struct{}, meta string) {
+	_, err := io.Copy(io.MultiWriter(c, dst), src)
 	if err != nil {
 		log.Printf("%s, copy error: %s", meta, err)
 	}
@@ -65,61 +47,50 @@ func (s *ProxyServer) broker(dst, src net.Conn, srcChan chan<- struct{}, meta st
 	srcChan <- struct{}{}
 }
 
-func (s *ProxyServer) handler(clientConn, serverConn *net.TCPConn) {
-	var serverClosed = make(chan struct{}, 1)
+func (c *ConnHandler) handle() {
+	var remoteClosed = make(chan struct{}, 1)
 	var clientClosed = make(chan struct{}, 1)
 
-	go s.broker(serverConn, clientConn, clientClosed, "client")
-	go s.broker(clientConn, serverConn, serverClosed, "server")
+	go c.broker(c.client, c.remote, remoteClosed, "remote")
+	go c.broker(c.remote, c.client, clientClosed, "client")
 
-	var waitFor chan struct{}
 	select {
-	case <-clientClosed:
-		serverConn.SetLinger(0)
-		serverConn.Close()
-		waitFor = serverClosed
-	case <-serverClosed:
-		clientConn.Close()
-		waitFor = clientClosed
-	}
+	case <- clientClosed:
+		c.remote.SetLinger(0)
+		c.remote.Close()
 
-	<-waitFor
+	case <- remoteClosed:
+		c.client.Close()
+	}
 }
 
-func (s *ProxyServer) ListenAndServe() error {
-	var message = fmt.Sprintf("\nstarting server : %s\n", s.name) +
-		fmt.Sprintf("    with mode   : %s\n", s.mode) +
-		fmt.Sprintf("    with route  : %s -> %s\n", s.source, s.backend) +
-		fmt.Sprintf("    with sinks  : %s", s.sinks)
+func (p *ProxyServer) ListenAndServe() error {
+	var message = fmt.Sprintf("\nstarting server : %s\n", p.name) +
+		fmt.Sprintf("    with mode   : %s\n", p.mode) +
+		fmt.Sprintf("    with route  : %s -> %s\n", p.source, p.backend)
 	log.Println(message)
 
-	//todo: make file to support cross-os builds.
-
-	//todo: mode -> proxy (source <> backend)
-	// sinks - null, console etc.
-
-	//todo: mode -> record traffic
-	// sinks - file, redis, inmemory, kafka, pulsar, database etc.
-
-	//todo: mode -> replay traffic
-	// request matcher (bytestream)?
-	// request matcher (parsed request)?
-
-	var listen, err = net.Listen("tcp", s.source.HostPort())
+	var listen, err = net.Listen("tcp", p.source.HostPort())
 	if err != nil {
-		log.Fatalln("error listening on the port: ", s.source.HostPort())
+		log.Fatalln("error listening on the port: ", p.source.HostPort())
 	}
 	defer listen.Close()
 
 	for {
-		var clientConn, _ = listen.Accept()
-		var serverConn, err = net.Dial("tcp", s.backend.HostPort())
+		var client, _ = listen.Accept()
+		var remote, err = net.Dial("tcp", p.backend.HostPort())
 		if err != nil {
 			log.Println("failed to connect to backend server: ", err)
-			clientConn.Close()
+			client.Close()
 		} else {
-			log.Printf("serving %s -> %s\n", clientConn.RemoteAddr().String(), serverConn.RemoteAddr().String())
-			go s.handler(clientConn.(*net.TCPConn), serverConn.(*net.TCPConn))
+
+			log.Printf("serving %s -> %s\n", client.RemoteAddr().String(), remote.RemoteAddr().String())
+			var handler = &ConnHandler{
+				sink: p.sink,
+				client: client.(*net.TCPConn),
+				remote: remote.(*net.TCPConn),
+			}
+			go handler.handle()
 		}
 	}
 	return nil

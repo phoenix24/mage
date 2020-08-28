@@ -1,7 +1,7 @@
 package configs
 
 type Mode string
-type Sink string
+type SinkConfig string
 
 const (
 	PROXY  Mode = "PROXY"
@@ -12,15 +12,23 @@ const (
 type ServerConfig struct {
 	Name    string  `mapstructure:"name"`
 	Mode    Mode    `mapstructure:"mode"`
-	Sinks   []Sink  `mapstructure:"sinks"`
 	Source  Address `mapstructure:"source"`
 	Backend Address `mapstructure:"backend"`
 }
 
+type HealthConfig struct {
+	path string `mapstructure:"path"`
+}
+
+type DirectoryConfig struct {
+	path string `mapstructure:"directory"`
+}
+
 type ProxyConfig struct {
-	Name    string
-	Port    int
-	Servers []ServerConfig
+	Name    string         `mapstructure:"name"`
+	Port    int            `mapstructure:"port"`
+	Sinks   []SinkConfig   `mapstructure:"sinks"`
+	Servers []ServerConfig `mapstructure:"servers"`
 }
 
 //func (b ServerConfig) Scheme() services.Scheme {
@@ -52,7 +60,6 @@ type ProxyConfig struct {
 //	}
 //	return TCP
 //}
-
 //const (
 //	TCP       Scheme = iota + 1
 //	UDP
