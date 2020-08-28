@@ -18,7 +18,7 @@ func main() {
 	//initialize all psinks.
 	var psinks []*sinks.TrafficSink
 	for _, config := range pconfig.Sinks {
-		var sink, _ = sinks.NewSink(config, channel)
+		var sink, _ = sinks.NewSink(config)
 		psinks = append(psinks, sink)
 	}
 

@@ -7,7 +7,9 @@ import (
 	"traffic-proxy/configs"
 )
 
-func NewSink(config configs.SinkConfig, channel chan *common.Packet) (*TrafficSink, error) {
+
+
+func NewSink(config configs.SinkConfig) (*TrafficSink, error) {
 	var writer io.WriteCloser
 
 	switch config {
