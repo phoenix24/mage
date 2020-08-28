@@ -15,11 +15,9 @@ func main() {
 	var pconfig = configs.ReadConfig(os.Args[1])
 	var channel = make(chan *common.Packet, 100)
 
-	//initialize packet sink.
 	var psink, _ = sinks.NewPacketSink(pconfig.Sinks, channel)
 	go psink.Consume()
 
-	//initialize all proxies.
 	for _, config := range pconfig.Servers {
 		go func(config configs.ServerConfig) {
 			var server, _ = servers.NewProxy(config, channel)

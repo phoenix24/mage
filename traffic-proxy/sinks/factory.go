@@ -48,9 +48,6 @@ func NewPacketSink(sconfigs []configs.SinkConfig, channel chan *common.Packet) (
 		var sink, _ = NewMessageSink(config)
 		msinks = append(msinks, sink)
 	}
-	var psink = &packet.SinkFanout{
-		msinks,
-		channel,
-	}
+	var psink = &packet.SinkFanout{msinks, channel}
 	return psink, nil
 }
