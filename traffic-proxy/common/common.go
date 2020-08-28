@@ -12,10 +12,15 @@ const (
 )
 
 type Packet struct {
-	Data  []byte
-	Time  time.Time
-	//srcIp string
-	//srcId SrcID
+	ID       string
+	ConnID   string  //todo: temp?
+	Protocol *string //todo: enum?
+	Data     []byte
+	Time     time.Time
+	SrcIp    string
+	SrcPort  string
+	DstIp    string
+	DstPort  string
 }
 
 type MessagePair struct {

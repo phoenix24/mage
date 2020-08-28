@@ -25,6 +25,6 @@ func (r Address) HostPort() string {
 	return fmt.Sprintf("%s:%s", r.parts()[1], r.parts()[2])
 }
 
-func (r Address) Scheme() string {
+func (r Address) Protocol() string {
 	return r.parts()[0]
 }

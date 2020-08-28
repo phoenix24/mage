@@ -7,6 +7,7 @@ import (
 
 type MessageSink struct {
 	Data chan []byte
+	//Bata chan *common.MessagePair
 	Quit chan []byte
 	Writer  io.WriteCloser
 }

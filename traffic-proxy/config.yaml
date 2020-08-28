@@ -4,31 +4,31 @@ servers:
   - name: backend service1
     mode: proxy
     source: "http://0.0.0.0:13000"
-    backend: "http://0.0.0.0:3000"
+    remote: "http://0.0.0.0:3000"
   - name: backend service1
     mode: proxy
     source: "http://0.0.0.0:13001"
-    backend: "http://0.0.0.0:3001"
+    remote: "http://0.0.0.0:3001"
   - name: backend service2
     mode: proxy
     source: "http://0.0.0.0:13002"
-    backend: "http://0.0.0.0:3002"
+    remote: "http://0.0.0.0:3002"
   - name: frontend service
     mode: proxy
     source: "http://0.0.0.0:14000"
-    backend: "http://0.0.0.0:4000"
+    remote: "http://0.0.0.0:4000"
   - name: mysql service
     mode: proxy
     source: "mysql://0.0.0.0:13306"
-    backend: "mysql://0.0.0.0:3306"
+    remote: "mysql://0.0.0.0:3306"
   - name: pgsql service
     mode: proxy
     source: "pgsql://0.0.0.0:15432"
-    backend: "pgsql://0.0.0.0:5432"
+    remote: "pgsql://0.0.0.0:5432"
   - name: redis service
     mode: proxy
     source: "redis://0.0.0.0:16379"
-    backend: "redis://0.0.0.0:6379"
+    remote: "redis://0.0.0.0:6379"
 sinks:
   - "null"
   - "console"

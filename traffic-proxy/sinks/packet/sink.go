@@ -5,20 +5,26 @@ import (
 	"traffic-proxy/sinks/message"
 )
 
-type Sink interface {
+type PacketSink interface {
 	Consume() error
 }
 
-type SinkFanout struct {
-	MessageSinks  []*message.MessageSink
-	PacketChannel chan *common.Packet
+type PacketSinkFanout struct {
+	MessageSinks   []*message.MessageSink
+	ChannelPackets chan *common.Packet
 }
 
-func (p *SinkFanout) Consume() error {
+func (p *PacketSinkFanout) Consume() error {
 	go func() {
 		for {
 			select {
-			case packet := <- p.PacketChannel:
+			case packet := <- p.ChannelPackets:
+				//todo:
+				// 1. packet - hold it, by connid (later by tcp).
+				// 2. packet - if complete, parse
+				// 3. packet - inspect request or response
+				// 4. packet - parser (ideally stateless)
+				// 5. packet - if request/ response complete, then flush to sink.
 				for _, psink := range p.MessageSinks {
 					psink.Data <- packet.Data
 				}

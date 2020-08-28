@@ -10,10 +10,10 @@ const (
 )
 
 type ServerConfig struct {
-	Name    string  `mapstructure:"name"`
-	Mode    Mode    `mapstructure:"mode"`
-	Source  Address `mapstructure:"source"`
-	Backend Address `mapstructure:"backend"`
+	Name   string  `mapstructure:"name"`
+	Mode   Mode    `mapstructure:"mode"`
+	Source Address `mapstructure:"source"`
+	Remote Address `mapstructure:"remote"`
 }
 
 type HealthConfig struct {
@@ -31,8 +31,8 @@ type ProxyConfig struct {
 	Servers []ServerConfig `mapstructure:"servers"`
 }
 
-//func (b ServerConfig) Scheme() services.Scheme {
-//	var dst, src = b.backend.Scheme(), b.Source.Scheme()
+//func (b ServerConfig) Protocol() services.Protocol {
+//	var dst, src = b.backend.Protocol(), b.Source.Protocol()
 //	if dst != src {
 //		log.Fatalln("source and destination must be same service type.")
 //	}
@@ -61,7 +61,7 @@ type ProxyConfig struct {
 //	return TCP
 //}
 //const (
-//	TCP       Scheme = iota + 1
+//	TCP       Protocol = iota + 1
 //	UDP
 //	DNS
 //	NTP

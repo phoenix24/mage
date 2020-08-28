@@ -23,7 +23,7 @@ func handler(backend string) http.Handler {
 
 func newService(backend configs.ServerConfig) {
 	var mux = http.NewServeMux()
-	mux.Handle("/", handler(backend.Backend))
+	mux.Handle("/", handler(backend.Remote))
 
 	var server = &http.Server{Addr: port, Handler: mux}
 	log.Fatalln(server.ListenAndServe())
