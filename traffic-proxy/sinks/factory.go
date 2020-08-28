@@ -5,54 +5,52 @@ import (
 	"log"
 	"traffic-proxy/common"
 	"traffic-proxy/configs"
+	"traffic-proxy/sinks/message"
+	"traffic-proxy/sinks/packet"
 )
 
-
-
-func NewSink(config configs.SinkConfig) (*TrafficSink, error) {
+func NewMessageSink(config configs.SinkConfig) (*message.MessageSink, error) {
 	var writer io.WriteCloser
 
 	switch config {
 	case "null":
-		writer = &NullSink{}
+		writer = &message.MessageSinkNull{}
 
 	case "console":
-		writer = &ConsoleSink{}
+		writer = &message.MessageSinkConsole{}
 
 	default:
 		log.Fatalln("invalid sink config", config)
 	}
 
-	var sink = &TrafficSink{
-		data: make(chan []byte),
-		writer: writer,
+	var sink = &message.MessageSink{
+		Data: make(chan []byte),
+		Writer: writer,
 	}
 
 	go func() {
 		for {
 			select {
-			case <- sink.quit:
-				sink.writer.Close()
+			case <- sink.Quit:
+				sink.Writer.Close()
 
-			case data := <- sink.data:
-				sink.writer.Write(data)
+			case data := <- sink.Data:
+				sink.Writer.Write(data)
 			}
 		}
 	}()
 	return sink, nil
 }
 
-func NewSinkFanout(channel chan *common.Packet, psinks []*TrafficSink) error {
-	go func() {
-		for {
-			select {
-			case packet := <- channel:
-				for _, psink := range psinks {
-					//psink.writer.Write(packet.Data)
-					psink.data <- packet.Data
-				}
-			}
-		}
-	}()
-	return nil
+func NewPacketSink(sconfigs []configs.SinkConfig, channel chan *common.Packet) (packet.Sink, error) {
+	var msinks []*message.MessageSink
+	for _, config := range sconfigs {
+		var sink, _ = NewMessageSink(config)
+		msinks = append(msinks, sink)
+	}
+	var psink = &packet.SinkFanout{
+		msinks,
+		channel,
+	}
+	return psink, nil
 }

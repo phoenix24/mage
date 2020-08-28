@@ -15,15 +15,9 @@ func main() {
 	var pconfig = configs.ReadConfig(os.Args[1])
 	var channel = make(chan *common.Packet, 100)
 
-	//initialize all psinks.
-	var psinks []*sinks.TrafficSink
-	for _, config := range pconfig.Sinks {
-		var sink, _ = sinks.NewSink(config)
-		psinks = append(psinks, sink)
-	}
-
-	//initialize sink fanout.
-	sinks.NewSinkFanout(channel, psinks)
+	//initialize packet sink.
+	var psink, _ = sinks.NewPacketSink(pconfig.Sinks, channel)
+	go psink.Consume()
 
 	//initialize all proxies.
 	for _, config := range pconfig.Servers {
