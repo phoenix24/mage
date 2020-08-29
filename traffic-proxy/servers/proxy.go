@@ -2,6 +2,7 @@ package servers
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"log"
 	"net"
@@ -21,6 +22,7 @@ type ConnHandler struct {
 	sink     chan *common.Packet
 	client   *net.TCPConn
 	remote   *net.TCPConn
+	connid   *string
 	protocol *string
 }
 
@@ -34,7 +36,15 @@ type ProxyServer struct {
 }
 
 func (c *ConnHandler) Write(payload []byte) (n int, err error) {
-	c.sink <- &common.Packet{Data: payload, Time: time.Now(), Protocol: c.protocol}
+	var packet = &common.Packet{
+		Data: payload,
+		Time: time.Now(),
+		SrcIp: c.client.RemoteAddr().String(),
+		DstIp: c.remote.RemoteAddr().String(),
+		ConnID: c.connid,
+		Protocol: c.protocol,
+	}
+	c.sink <- packet
 	return len(payload), nil
 }
 
@@ -86,9 +96,11 @@ func (p *ProxyServer) ListenAndServe() error {
 			client.Close()
 		} else {
 
-			log.Printf("serving %s -> %s\n", client.RemoteAddr().String(), remote.RemoteAddr().String())
+			var connid = uuid.New().String()
+			log.Printf("serving id:%s, %s -> %s\n", connid, client.RemoteAddr().String(), remote.RemoteAddr().String())
 			var handler = &ConnHandler{
 				sink: p.sink,
+				connid: &connid,
 				client: client.(*net.TCPConn),
 				remote: remote.(*net.TCPConn),
 				protocol: &p.protocol,

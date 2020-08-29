@@ -13,14 +13,15 @@ import (
 
 func main() {
 	var pconfig = configs.ReadConfig(os.Args[1])
-	var channel = make(chan *common.Packet, 100)
+	var chPackets = make(chan *common.Packet, 100)
+	var chCommands = make(chan *common.Commands, 100)
 
-	var psink, _ = sinks.NewPacketSink(pconfig.Sinks, channel)
+	var psink, _ = sinks.NewPacketSink(pconfig.Sinks, chPackets, chCommands)
 	go psink.Consume()
 
 	for _, config := range pconfig.Servers {
 		go func(config configs.ServerConfig) {
-			var server, _ = servers.NewProxy(config, channel)
+			var server, _ = servers.NewProxy(config, chPackets, chCommands)
 			var _ = server.ListenAndServe()
 		}(config)
 	}

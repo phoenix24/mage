@@ -13,7 +13,7 @@ const (
 
 type Packet struct {
 	ID       string
-	ConnID   string  //todo: temp?
+	ConnID   *string  //todo: temp?
 	Protocol *string //todo: enum?
 	Data     []byte
 	Time     time.Time
@@ -25,7 +25,10 @@ type Packet struct {
 
 type MessagePair struct {
 	ID       string //todo: must be a uuid (type)?
-	Request  Packet
-	Response Packet
-	Protocol MessageProtocol
+	Request  *Packet
+	Response *Packet
+	Protocol *string //MessageProtocol
+}
+
+type Commands struct {
 }
