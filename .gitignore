@@ -1,6 +1,7 @@
 # go binaries
 *.bin
 bin/
+readme-*
 
 # emacs, vim temp
 *~

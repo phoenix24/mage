@@ -30,18 +30,6 @@ func NewMessageSink(config configs.SinkConfig) (*message.MessageSink, error) {
 		log.Fatalln("invalid sink config", config)
 	}
 	sinkssofar[config] = &sink
-
-	//go func() {
-	//	for {
-	//		select {
-	//		case <- sink.Quit:
-	//			sink.Writer.Close()
-	//
-	//		case data := <- sink.Data:
-	//			sink.Writer.Write(data)
-	//		}
-	//	}
-	//}()
 	return &sink, nil
 }
 

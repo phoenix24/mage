@@ -36,10 +36,10 @@ func (p *PacketSinkFanout) Consume() error {
 				var connid = *packet.ConnID
 				if request, v := p.ConnPackets[connid]; v {
 					var pair = &common.MessagePair{
-						ID: msgid,
-						Request: request,
-						Response: packet,
-						Protocol: packet.Protocol,
+						ID:          msgid,
+						RequestRaw:  request,
+						ResponseRaw: packet,
+						Protocol:    packet.Protocol,
 					}
 					delete(p.ConnPackets, connid)
 					p.ChMessages <- pair
@@ -48,11 +48,9 @@ func (p *PacketSinkFanout) Consume() error {
 					p.ConnPackets[connid] = packet
 				}
 				//todo:
-				// 1. packet - hold it, by connid (later by tcp).
-				// 2. packet - if complete, parse
-				// 3. packet - inspect request or response
-				// 4. packet - parser (ideally stateless)
-				// 5. packet - if request/ response complete, then flush to sink.
+				// 1. packet - hold it, by connid (for tcp, mysql etc).
+				// 2. packet - if complete, parse (ideally stateless), else goto 1.
+				// 3. packet - flush to sink.
 			}
 		}
 	}()

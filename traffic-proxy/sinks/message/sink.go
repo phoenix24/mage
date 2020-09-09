@@ -29,8 +29,8 @@ type MessageSinkConsole struct {
 }
 
 func (sk *MessageSinkConsole) Write(msg *common.MessagePair) (n int, err error) {
-	var request = msg.Request.Data
-	var response = msg.Response.Data
+	var request = msg.RequestRaw.Data
+	var response = msg.ResponseRaw.Data
 	fmt.Printf(">>%s\n%s\n", msg.ID, string(request))
 	fmt.Printf("<<%s\n%s\n", msg.ID, string(response))
 	return len(request) + len(response), nil
